@@ -43,7 +43,7 @@ function Home() {
             <Container component={container}>
                 <PostForm userId = {1} userName = {"serdarcolak"} refreshPosts = {refreshPosts}/>
                 {postList.map(post => (
-                    <Post userId = {post.userId} userName = {post.userName} 
+                    <Post postId = {post.id} userId = {post.userId} userName = {post.userName} 
                     title={post.title} text={post.text}></Post>
                 ))}
             </Container>

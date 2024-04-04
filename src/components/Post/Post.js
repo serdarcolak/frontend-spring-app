@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -15,7 +15,7 @@ import CommentIcon from '@mui/icons-material/Comment';
 const cardContainer = styled(Card)({
     color: "inherit",
     textDecoration: "none",
-    justifyContent : "center"
+    justifyContent: "center"
 });
 const divStyle = {
     paddingTop: '20px',
@@ -45,18 +45,51 @@ const StyledLink = styled(Link)({
 
 function Post(props) {
 
-    const { title, text, userId, userName } = props;
+    const { title, text, userId, userName, postId } = props;
     const [expanded, setExpanded] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [error, setError] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [commentList, setCommentList] = useState([]);
+    const isInitialMount = useRef(true);
 
     const handleExpandClick = () => {
         setExpanded(!expanded);
+        refreshComments();
+        console.log(commentList);
+
+
     };
 
 
     const handleLike = () => {
         setLiked(!liked);
     }
+
+    const refreshComments = () => {
+        fetch("/comments?postId=" + postId)
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    setIsLoaded(true);
+                    setCommentList(result);
+                },
+                (error) => {
+                    console.error("Error fetching comments:", error);
+                    setIsLoaded(true);
+                    setError(error);
+                }
+            )
+    }
+
+    useEffect(() => {
+        if (!isInitialMount.current) {
+            refreshComments();
+        } else {
+            isInitialMount.current = false;
+        }
+
+    }, [commentList, postId])
 
     return (
         <div className="postContainer" style={divStyle}>
@@ -66,10 +99,8 @@ function Post(props) {
                         <StyledLink to={{ pathname: "/users/" + userId }}>
                             <Avatar component={avatar} aria-label="recipe">
                                 {userName.charAt(0).toUpperCase()}
-
                             </Avatar>
                         </StyledLink>
-
                     }
                     title={
                         <Typography
@@ -84,7 +115,6 @@ function Post(props) {
                 <CardActions disableSpacing>
                     <IconButton
                         onClick={handleLike}
-
                         aria-label="add to favorites">
                         <FavoriteIcon style={liked ? { color: "red" } : null} />
                     </IconButton>
@@ -93,16 +123,19 @@ function Post(props) {
                         expand={expanded}
                         onClick={handleExpandClick}
                         aria-expanded={expanded}
-                        aria-label="show more"
-
-
-                    >
+                        aria-label="show more">
                         <CommentIcon />
                     </IconButton>
                 </CardActions>
                 <Collapse in={expanded} timeout="auto" unmountOnExit>
                     <CardContent>
-
+                        {/* Render comments here */}
+                        {commentList.map((comment, index) => (
+                            <div key={index}>
+                                <p>{comment.text}</p>
+                                <p>By: {comment.author}</p>
+                            </div>
+                        ))}
                     </CardContent>
                 </Collapse>
             </Card>
